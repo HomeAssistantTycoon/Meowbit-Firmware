@@ -24,3 +24,12 @@ jobs:
 
       - name: Build project
         run: make
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifact
+          path: |
+            # Replace with your actual build output
+            bin/
+            output/
