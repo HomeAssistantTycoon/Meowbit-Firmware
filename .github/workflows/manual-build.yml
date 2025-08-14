@@ -20,33 +20,28 @@ jobs:
           sudo apt update
           sudo apt install -y gcc-arm-none-eabi make unzip p7zip-full git
 
-      # 3. Build libopencm3 single-threaded using bash
+      # 3. Build libopencm3 single-threaded forcing bash
       - name: Build libopencm3
-        shell: bash
         run: |
           set -e
-          echo "Building libopencm3 single-threaded using bash to avoid syntax errors"
-          make -C libopencm3 lib
+          echo "Building libopencm3 single-threaded using bash globally"
+          make SHELL=/bin/bash -C libopencm3 lib
 
       # 4. Build Meowbit firmware
       - name: Build Meowbit Firmware
-        shell: bash
         run: |
           set -e
           echo "Building Meowbit firmware..."
           make build-bl
 
-      # 5. Package UF2
+      # 5. Package UF2 files
       - name: Package UF2
-        shell: bash
         run: |
           set -e
-          if [ -f build/uf2-stm32f.zip ]; then
-            echo "UF2 zip already exists"
-          else
-            cd build && 7z a uf2-stm32f.zip */bootloader.elf */bootloader.bin */flasher.uf2
-            cd ..
-          fi
+          echo "Packaging UF2 files..."
+          cd build
+          7z a uf2-stm32f.zip */bootloader.elf */bootloader.bin */flasher.uf2
+          cd ..
 
       # 6. Upload firmware artifacts
       - name: Upload Firmware Artifact
