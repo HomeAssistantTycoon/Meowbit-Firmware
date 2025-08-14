@@ -1,4 +1,4 @@
-name: Manual Build
+name: Manual Meowbit Build
 
 on:
   workflow_dispatch:
@@ -12,7 +12,26 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Test echo
+      - name: Setup ARM GCC and Build Meowbit Firmware
         shell: bash
         run: |
-          echo "This works!"
+          echo "Downloading and setting up ARM GCC..."
+          TOOLCHAIN_DIR="$HOME/arm-gcc"
+          mkdir -p "$TOOLCHAIN_DIR"
+          cd "$TOOLCHAIN_DIR"
+          wget -q https://developer.arm.com/-/media/Files/downloads/gnu-rm/14.3.Rel1/arm-gnu-toolchain-14.3.rel1-x86_64-arm-none-eabi.tar.xz
+          tar -xJf arm-gnu-toolchain-14.3.rel1-x86_64-arm-none-eabi.tar.xz
+          echo "$TOOLCHAIN_DIR/arm-gnu-toolchain-14.3.rel1-x86_64-arm-none-eabi/bin" >> $GITHUB_PATH
+          arm-none-eabi-gcc --version
+
+          echo "Running make build-bl..."
+          make build-bl
+
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: meowbit-firmware
+          path: |
+            build/uf2-stm32f.zip
+            build/*.bin
+            build/*.uf2
