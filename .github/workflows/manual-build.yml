@@ -15,7 +15,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
-        submodules: true  # Initialize libopencm3
+        submodules: true
 
     - name: Install ARM GCC
       run: |
@@ -25,9 +25,7 @@ jobs:
     - name: Patch libopencm3 Makefile
       run: |
         echo "Patching libopencm3 Makefile for GitHub Actions..."
-        # Force single-threaded build to avoid syntax errors
-        sed -i 's|$(Q)$(MAKE) --directory=$@ SRCLIBDIR="$(SRCLIBDIR)"|$(Q)$(MAKE) -C $@ SRCLIBDIR=$(SRCLIBDIR) -j1|' libopencm3/Makefile
-        # Force bash as shell globally (helps prevent /bin/sh unterminated string errors)
+        # Force bash as shell globally
         sed -i '1s|^|SHELL := /bin/bash\n|' libopencm3/Makefile
 
     - name: Build libopencm3
@@ -38,7 +36,7 @@ jobs:
     - name: Build Meowbit firmware
       run: |
         echo "Building Meowbit firmware..."
-        make build-bl
+        make build-bl -j1
 
     - name: Upload firmware artifact
       uses: actions/upload-artifact@v4
