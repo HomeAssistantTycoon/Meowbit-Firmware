@@ -25,12 +25,12 @@ jobs:
         shell: bash
         run: |
           set -e
-          echo "Limiting libopencm3 parallel build to avoid syntax errors"
-          export LIBOPENCM3_JOBS=1
+          echo "Forcing single-threaded libopencm3 build to avoid syntax errors"
+          export MAKEFLAGS="-j1"
           echo "Running make build-bl..."
           make build-bl
 
-      # 4. Package UF2 files if needed
+      # 4. Package UF2 if needed
       - name: Package UF2
         shell: bash
         run: |
