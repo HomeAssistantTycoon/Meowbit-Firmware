@@ -1,4 +1,4 @@
-name: Build Meowbit Firmware (Option A)
+name: Build Meowbit Firmware
 
 on:
   workflow_dispatch:
@@ -6,45 +6,44 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          submodules: true
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: true  # auto-init submodules
 
-      - name: Set up ARM GCC Toolchain
-        uses: ArmMbed/mbed-action-setup-arm-gcc@v1
-        with:
-          version: '14-2022-q3'  # Adjust version if needed
+    - name: Set up build environment
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential make gcc-arm-none-eabi libnewlib-arm-none-eabi
 
-      - name: Fix Environment for libopencm3
-        run: |
-          echo "Building libopencm3 single-threaded using bash globally"
-          export LC_ALL=C
-          export LANG=C
-          export SHELL=/bin/bash
-          cd libopencm3
-          make clean
-          make -j1 lib
+    - name: Limit libopencm3 parallel build globally
+      run: |
+        export MAKEFLAGS="-j1"
+        echo "Single-threaded build enabled to avoid syntax errors"
 
-      - name: Build Meowbit Firmware
-        run: |
-          echo "Running make build-bl..."
-          make build-bl
+    - name: Build libopencm3
+      run: |
+        set -e
+        echo "Building libopencm3 single-threaded..."
+        make -C libopencm3 lib
 
-      - name: Package UF2 Artifact
-        run: |
-          echo "Packaging UF2..."
-          mkdir -p artifact
-          cp build/*/*.uf2 artifact/ || true
+    - name: Build Meowbit firmware
+      run: |
+        set -e
+        echo "Building Meowbit firmware..."
+        make build-bl
 
-      - name: Upload UF2 Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: meowbit-firmware
-          path: artifact/
-
+    - name: Package UF2 artifact
+      run: |
+        set -e
+        mkdir -p release
+        # adjust this path if your Makefile generates .uf2 elsewhere
+        cp build/*/*.uf2 release/ || echo "No UF2 generated"
+    
+    - name: Upload UF2 artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: meowbit-firmware
+        path: release/*.uf2
