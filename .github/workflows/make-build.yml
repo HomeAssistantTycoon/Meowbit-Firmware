@@ -17,15 +17,22 @@ jobs:
       - name: Install ARM toolchain and dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y make gcc-arm-none-eabi cmake unzip p7zip-full
+          sudo apt-get install -y make gcc-arm-none-eabi cmake unzip p7zip-full bash
 
       - name: Verify Make and ARM GCC versions
         run: |
           make --version
           arm-none-eabi-gcc --version
+          bash --version
 
-      - name: Build bootloader
-        run: make build-bl
+      - name: Build libopencm3 and bootloader
+        run: |
+          # Build libopencm3 safely
+          cd libopencm3
+          SHELL=/bin/bash make -j2 lib
+          cd ..
+          # Build the bootloader
+          make build-bl
 
       - name: Create UF2 package
         run: make drop
@@ -34,4 +41,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: BetterMeowbit-Bootloader.uf2
-          path: build/uf2-stm32f.zip  # The zip created by the drop target
+          path: build/uf2-stm32f.zip  # zip produced by drop target
