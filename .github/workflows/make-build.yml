@@ -14,11 +14,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Download prebuilt ARM GCC toolchain
-      - name: Setup ARM GCC
+      - name: Setup ARM GCC toolchain
+        shell: bash
         run: |
-          mkdir -p $HOME/arm-gcc
-          cd $HOME/arm-gcc
+          mkdir -p "$HOME/arm-gcc"
+          cd "$HOME/arm-gcc"
           wget -q https://developer.arm.com/-/media/Files/downloads/gnu-rm/13.3-2024.07/binrel/gcc-arm-none-eabi-13.3-2024.07-x86_64-linux.tar.bz2
           tar -xjf gcc-arm-none-eabi-13.3-2024.07-x86_64-linux.tar.bz2
           echo "$HOME/arm-gcc/gcc-arm-none-eabi-13.3-2024.07/bin" >> $GITHUB_PATH
@@ -28,13 +28,14 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y make cmake unzip p7zip-full bash
 
-      - name: Verify ARM GCC
+      - name: Verify ARM GCC and Make
         run: |
           arm-none-eabi-gcc --version
           make --version
           bash --version
 
       - name: Build libopencm3 and bootloader
+        shell: bash
         run: |
           cd libopencm3
           SHELL=/bin/bash make -j2 lib
