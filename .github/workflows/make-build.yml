@@ -1,45 +1,37 @@
-name: Build Meowbit Firmware
+name: Manual Build
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
+  workflow_dispatch: # Allows manual triggering from GitHub UI
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout repository
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
-      # Setup ARM GCC
-      - name: Setup ARM GCC
-        shell: bash
+      - name: Set up ARM GCC
         run: |
-          echo "Setting up ARM GCC"
-          set -e
-          ARM_DIR="$HOME/arm-gcc"
-          mkdir -p "$ARM_DIR"
-          cd "$ARM_DIR"
-          wget -q https://developer.arm.com/-/media/Files/downloads/gnu-rm/13.3-2024.07/binrel/gcc-arm-none-eabi-13.3-2024.07-x86_64-linux.tar.bz2
-          tar -xjf gcc-arm-none-eabi-13.3-2024.07-x86_64-linux.tar.bz2
-          echo "$ARM_DIR/gcc-arm-none-eabi-13.3-2024.07/bin" >> $GITHUB_PATH
-          arm-none-eabi-gcc --version
+          echo "Downloading ARM GCC toolchain..."
+          mkdir -p $HOME/arm-gcc
+          curl -L https://developer.arm.com/-/media/Files/downloads/gnu-rm/13.2.Rel1/gcc-arm-none-eabi-13.2.Rel1-x86_64-linux.tar.bz2 \
+            | tar -xj --strip-components=1 -C $HOME/arm-gcc
+          echo "$HOME/arm-gcc/bin" >> $GITHUB_PATH
 
-      # Install dependencies (if needed)
-      - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y build-essential cmake pkg-config python3
+      - name: Verify GCC install
+        run: arm-none-eabi-gcc --version
 
-      # Build firmware
-      - name: Build
-        run: make build-bl
+      - name: Build firmware
+        run: make
 
-      # Upload firmware artifact
-      - name: Upload firmware
+      - name: Upload firmware artifact
         uses: actions/upload-artifact@v4
         with:
-          name: meowbit-firmware
-          path: build/*.bin
+          name: firmware
+          path: |
+            *.bin
+            *.hex
+            *.uf2
