@@ -21,19 +21,19 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y make gcc-arm-none-eabi git bzip2 curl
 
-    - name: Build libopencm3
+    - name: Force bash for libopencm3 build
       run: |
         echo "Building libopencm3 single-threaded with bash"
-        make -C libopencm3 -j1
+        cd libopencm3
+        MAKEFLAGS= make -j1 SHELL=/bin/bash
 
     - name: Build Meowbit firmware
       run: |
         echo "Building Meowbit firmware"
-        make build-bl
+        make build-bl SHELL=/bin/bash
 
     - name: Upload firmware artifact
       uses: actions/upload-artifact@v4
       with:
         name: Meowbit-Firmware
         path: Meowbit-Firmware/build/*.hex
-
