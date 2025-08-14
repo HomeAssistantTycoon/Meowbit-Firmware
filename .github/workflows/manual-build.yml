@@ -8,42 +8,45 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
+    - name: Checkout repo
       uses: actions/checkout@v4
       with:
-        submodules: true  # auto-init submodules
+        submodules: true
 
-    - name: Set up build environment
+    - name: Install ARM GCC toolchain
       run: |
         sudo apt-get update
         sudo apt-get install -y build-essential make gcc-arm-none-eabi libnewlib-arm-none-eabi
 
-    - name: Limit libopencm3 parallel build globally
+    - name: Force single-threaded libopencm3 build
+      shell: bash
       run: |
         export MAKEFLAGS="-j1"
-        echo "Single-threaded build enabled to avoid syntax errors"
+        echo "Single-threaded build enabled globally"
 
     - name: Build libopencm3
+      shell: bash
       run: |
         set -e
-        echo "Building libopencm3 single-threaded..."
+        echo "Building libopencm3..."
         make -C libopencm3 lib
 
     - name: Build Meowbit firmware
+      shell: bash
       run: |
         set -e
         echo "Building Meowbit firmware..."
         make build-bl
 
-    - name: Package UF2 artifact
+    - name: Collect UF2 artifacts
+      shell: bash
       run: |
-        set -e
         mkdir -p release
-        # adjust this path if your Makefile generates .uf2 elsewhere
-        cp build/*/*.uf2 release/ || echo "No UF2 generated"
-    
+        find build -name '*.uf2' -exec cp {} release/ \; || echo "No UF2 files found"
+
     - name: Upload UF2 artifact
       uses: actions/upload-artifact@v4
       with:
         name: meowbit-firmware
         path: release/*.uf2
+
