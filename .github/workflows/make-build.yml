@@ -2,9 +2,11 @@ name: Build Meowbit Firmware
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
@@ -17,14 +19,8 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Test bash works
-        shell: bash
-        run: echo "Hello, world!"
-
       - name: Setup ARM GCC toolchain
-        shell: bash
         run: |
-          set -e
           echo "Setting up ARM GCC"
           ARM_DIR="$HOME/arm-gcc"
           mkdir -p "$ARM_DIR"
@@ -33,15 +29,19 @@ jobs:
           tar -xjf gcc-arm-none-eabi-13.3-2024.07-x86_64-linux.tar.bz2
           echo "$ARM_DIR/gcc-arm-none-eabi-13.3-2024.07/bin" >> $GITHUB_PATH
           arm-none-eabi-gcc --version
+        shell: bash
 
       - name: Build firmware
-        shell: bash
         run: |
-          make checksubmodules
-          make -j$(nproc)
+          echo "Starting firmware build..."
+          make build-bl
+        shell: bash
 
       - name: Upload firmware artifact
         uses: actions/upload-artifact@v4
         with:
           name: meowbit-firmware
-          path: "*.bin"
+          path: |
+            build/*.bin
+            build/*.hex
+            build/*.uf2
