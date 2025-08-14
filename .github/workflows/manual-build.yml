@@ -5,6 +5,7 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build-firmware:
@@ -14,22 +15,22 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
-        submodules: true  # Make sure libopencm3 is initialized
+        submodules: true  # Initialize libopencm3
 
     - name: Set up ARM GCC
       uses: ArmMbed/mbed-action-setup-arm-gcc@v1
       with:
-        version: '12-2023-q4-major' # Update if you want another GCC version
+        version: '12-2023-q4-major'
 
-    - name: Fix libopencm3 Makefile for GitHub Actions
+    - name: Patch libopencm3 Makefile for GitHub Actions
       run: |
         echo "Patching libopencm3 Makefile to avoid unterminated string errors..."
-        sed -i 's|$(Q)$(MAKE) --directory=$@ SRCLIBDIR="$(SRCLIBDIR)"|$(Q)$(MAKE) -C $@ SRCLIBDIR=$(SRCLIBDIR)|' libopencm3/Makefile
+        sed -i 's|$(Q)$(MAKE) --directory=$@ SRCLIBDIR="$(SRCLIBDIR)"|$(Q)$(MAKE) -C $@ SRCLIBDIR=$(SRCLIBDIR) -j1|' libopencm3/Makefile
 
     - name: Build libopencm3
       run: |
-        echo "Building libopencm3..."
-        make -C libopencm3
+        echo "Building libopencm3 single-threaded..."
+        make -C libopencm3 -j1
 
     - name: Build Meowbit firmware
       run: |
