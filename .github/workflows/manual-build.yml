@@ -8,29 +8,41 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout your repo and submodules
+      # 1. Checkout repo and submodules
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      # 2. Install ARM GCC from Ubuntu packages
-      - name: Setup ARM GCC via apt
+      # 2. Install required packages
+      - name: Setup Dependencies
         run: |
           sudo apt update
-          sudo apt install -y gcc-arm-none-eabi
-          arm-none-eabi-gcc --version
+          sudo apt install -y gcc-arm-none-eabi make unzip p7zip-full git
 
       # 3. Build Meowbit firmware
       - name: Build Meowbit Firmware
         shell: bash
         run: |
           set -e
+          echo "Limiting libopencm3 parallel build to avoid syntax errors"
+          export LIBOPENCM3_JOBS=1
           echo "Running make build-bl..."
           make build-bl
 
-      # 4. Upload firmware artifacts
-      - name: Upload firmware artifact
+      # 4. Package UF2 files if needed
+      - name: Package UF2
+        shell: bash
+        run: |
+          if [ -f build/uf2-stm32f.zip ]; then
+            echo "UF2 zip already exists"
+          else
+            cd build && 7z a uf2-stm32f.zip */bootloader.elf */bootloader.bin */flasher.uf2
+            cd ..
+          fi
+
+      # 5. Upload firmware artifacts
+      - name: Upload Firmware Artifact
         uses: actions/upload-artifact@v4
         with:
           name: meowbit-firmware
