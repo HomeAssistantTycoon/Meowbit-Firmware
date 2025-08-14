@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:
+  workflow_dispatch:  # allows manual triggering
 
 jobs:
   build:
@@ -14,20 +14,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install dependencies
+      - name: Install ARM toolchain and dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y make gcc-arm-none-eabi cmake
+          sudo apt-get install -y make gcc-arm-none-eabi cmake unzip
 
-      - name: Verify Make version
-        run: make --version
+      - name: Verify Make and ARM GCC versions
+        run: |
+          make --version
+          arm-none-eabi-gcc --version
 
-      - name: Build UF2
+      - name: Build UF2 firmware
         run: make build.uf2  # replace with your Makefile target
 
       - name: Upload UF2 artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
-          name: firmware
-          path: build.uf2
-
+          name: BetterMeowbit-v0.1.uf2
+          path: build.uf2  # replace with your actual .uf2 output path
