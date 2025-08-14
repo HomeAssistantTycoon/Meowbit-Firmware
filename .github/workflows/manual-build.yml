@@ -17,15 +17,18 @@ jobs:
       with:
         submodules: true  # Initialize libopencm3
 
-    - name: Set up ARM GCC
-      uses: embeddedtoolkit/setup-arm-gcc@v1
-      with:
-        version: '12-2023-q4-major'
-
-    - name: Patch libopencm3 Makefile for GitHub Actions
+    - name: Install ARM GCC
       run: |
-        echo "Patching libopencm3 Makefile to avoid unterminated string errors..."
+        sudo apt-get update
+        sudo apt-get install -y gcc-arm-none-eabi make
+
+    - name: Patch libopencm3 Makefile
+      run: |
+        echo "Patching libopencm3 Makefile for GitHub Actions..."
+        # Force single-threaded build to avoid syntax errors
         sed -i 's|$(Q)$(MAKE) --directory=$@ SRCLIBDIR="$(SRCLIBDIR)"|$(Q)$(MAKE) -C $@ SRCLIBDIR=$(SRCLIBDIR) -j1|' libopencm3/Makefile
+        # Force bash as shell globally (helps prevent /bin/sh unterminated string errors)
+        sed -i '1s|^|SHELL := /bin/bash\n|' libopencm3/Makefile
 
     - name: Build libopencm3
       run: |
