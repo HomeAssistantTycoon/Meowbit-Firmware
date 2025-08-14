@@ -6,34 +6,39 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v3
       with:
         submodules: recursive
 
-    - name: Install dependencies
+    - name: Set up environment
       run: |
-        sudo apt-get update
-        sudo apt-get install -y make gcc-arm-none-eabi git bzip2 curl
+        sudo apt update
+        sudo apt install -y make gcc-arm-none-eabi bzip2
 
-    - name: Force bash for libopencm3 build
+    - name: Patch libopencm3 Makefile
+      working-directory: libopencm3
       run: |
-        echo "Building libopencm3 single-threaded with bash"
-        cd libopencm3
-        MAKEFLAGS= make -j1 SHELL=/bin/bash
+        # Force bash for sub-make commands to avoid unterminated string issues
+        sed -i 's|^\(\s*\)\$\$(MAKE) --directory=\$@ SRCLIBDIR="\$\(SRCLIBDIR\)"|\1bash -c "\$\$(MAKE) --directory=\$@ SRCLIBDIR=\$\(SRCLIBDIR\)"|' Makefile
 
-    - name: Build Meowbit firmware
+    - name: Build libopencm3
+      working-directory: libopencm3
       run: |
-        echo "Building Meowbit firmware"
-        make build-bl SHELL=/bin/bash
+        set -e
+        echo "Building libopencm3..."
+        make -j1  # single-threaded to avoid issues
+
+    - name: Build Meowbit Firmware
+      run: |
+        set -e
+        echo "Building Meowbit firmware..."
+        make build-bl
 
     - name: Upload firmware artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v3
       with:
-        name: Meowbit-Firmware
-        path: Meowbit-Firmware/build/*.hex
+        name: Meowbit-firmware
+        path: Meowbit-Firmware/build/*.bin
