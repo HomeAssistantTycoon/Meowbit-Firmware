@@ -8,28 +8,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Checkout your repo and submodules
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      - name: Setup ARM GCC and Build Meowbit Firmware
+      # 2. Install ARM GCC from Ubuntu packages
+      - name: Setup ARM GCC via apt
+        run: |
+          sudo apt update
+          sudo apt install -y gcc-arm-none-eabi
+          arm-none-eabi-gcc --version
+
+      # 3. Build Meowbit firmware
+      - name: Build Meowbit Firmware
         shell: bash
         run: |
           set -e
-          echo "Setting up ARM GCC..."
-          TOOLCHAIN_DIR="$HOME/arm-gcc"
-          mkdir -p "$TOOLCHAIN_DIR"
-          cd "$TOOLCHAIN_DIR"
-          # Download official ARM GNU Toolchain 14.3.Rel1
-          curl -L --fail https://developer.arm.com/-/media/Files/downloads/gnu-rm/14.3.Rel1/arm-gnu-toolchain-14.3.rel1-x86_64-arm-none-eabi.tar.xz -o arm-gcc.tar.xz
-          tar -xJf arm-gcc.tar.xz --strip-components=1
-          echo "$TOOLCHAIN_DIR/bin" >> $GITHUB_PATH
-          arm-none-eabi-gcc --version
-
           echo "Running make build-bl..."
           make build-bl
 
+      # 4. Upload firmware artifacts
       - name: Upload firmware artifact
         uses: actions/upload-artifact@v4
         with:
@@ -38,3 +38,4 @@ jobs:
             build/uf2-stm32f.zip
             build/*.uf2
             build/*.bin
+
