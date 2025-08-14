@@ -18,7 +18,7 @@ jobs:
         submodules: true  # Initialize libopencm3
 
     - name: Set up ARM GCC
-      uses: ArmMbed/mbed-action-setup-arm-gcc@v1
+      uses: embeddedtoolkit/setup-arm-gcc@v1
       with:
         version: '12-2023-q4-major'
 
