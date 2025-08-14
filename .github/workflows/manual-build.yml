@@ -8,29 +8,33 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout repo and submodules
+      # 1. Checkout repo with submodules
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      # 2. Install required packages
+      # 2. Install dependencies
       - name: Setup Dependencies
         run: |
           sudo apt update
           sudo apt install -y gcc-arm-none-eabi make unzip p7zip-full git
 
-      # 3. Build Meowbit firmware
-      - name: Build Meowbit Firmware
-        shell: bash
+      # 3. Build libopencm3 single-threaded first
+      - name: Build libopencm3
         run: |
           set -e
-          echo "Forcing single-threaded libopencm3 build to avoid syntax errors"
-          export MAKEFLAGS="-j1"
-          echo "Running make build-bl..."
+          echo "Building libopencm3 single-threaded to avoid syntax errors"
+          make -C libopencm3 lib
+
+      # 4. Build Meowbit firmware
+      - name: Build Meowbit Firmware
+        run: |
+          set -e
+          echo "Building Meowbit firmware..."
           make build-bl
 
-      # 4. Package UF2 if needed
+      # 5. Package UF2
       - name: Package UF2
         shell: bash
         run: |
@@ -41,7 +45,7 @@ jobs:
             cd ..
           fi
 
-      # 5. Upload firmware artifacts
+      # 6. Upload artifacts
       - name: Upload Firmware Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -50,4 +54,3 @@ jobs:
             build/uf2-stm32f.zip
             build/*.uf2
             build/*.bin
-
