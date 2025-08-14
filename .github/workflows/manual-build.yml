@@ -1,44 +1,45 @@
 name: Build Meowbit Firmware
 
 on:
-  workflow_dispatch:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
-  build:
+  build-firmware:
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
-        submodules: recursive
+        submodules: true  # Make sure libopencm3 is initialized
 
-    - name: Set up environment
-      run: |
-        sudo apt update
-        sudo apt install -y make gcc-arm-none-eabi bzip2
+    - name: Set up ARM GCC
+      uses: ArmMbed/mbed-action-setup-arm-gcc@v1
+      with:
+        version: '12-2023-q4-major' # Update if you want another GCC version
 
-    - name: Patch libopencm3 Makefile
-      working-directory: libopencm3
+    - name: Fix libopencm3 Makefile for GitHub Actions
       run: |
-        # Force bash for sub-make commands to avoid unterminated string issues
-        sed -i 's|^\(\s*\)\$\$(MAKE) --directory=\$@ SRCLIBDIR="\$\(SRCLIBDIR\)"|\1bash -c "\$\$(MAKE) --directory=\$@ SRCLIBDIR=\$\(SRCLIBDIR\)"|' Makefile
+        echo "Patching libopencm3 Makefile to avoid unterminated string errors..."
+        sed -i 's|$(Q)$(MAKE) --directory=$@ SRCLIBDIR="$(SRCLIBDIR)"|$(Q)$(MAKE) -C $@ SRCLIBDIR=$(SRCLIBDIR)|' libopencm3/Makefile
 
     - name: Build libopencm3
-      working-directory: libopencm3
       run: |
-        set -e
         echo "Building libopencm3..."
-        make -j1  # single-threaded to avoid issues
+        make -C libopencm3
 
-    - name: Build Meowbit Firmware
+    - name: Build Meowbit firmware
       run: |
-        set -e
         echo "Building Meowbit firmware..."
         make build-bl
 
     - name: Upload firmware artifact
       uses: actions/upload-artifact@v4
       with:
-        name: Meowbit-firmware
-        path: Meowbit-Firmware/build/*.bin
+        name: meowbit-firmware
+        path: |
+          build/*.hex
+          build/*.bin
