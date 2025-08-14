@@ -5,23 +5,22 @@ on:
     branches:
       - main
   pull_request:
-    branches:
-      - main
-  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      # Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
-      - name: Setup ARM GCC toolchain
+      # Setup ARM GCC
+      - name: Setup ARM GCC
+        shell: bash
         run: |
           echo "Setting up ARM GCC"
+          set -e
           ARM_DIR="$HOME/arm-gcc"
           mkdir -p "$ARM_DIR"
           cd "$ARM_DIR"
@@ -29,19 +28,18 @@ jobs:
           tar -xjf gcc-arm-none-eabi-13.3-2024.07-x86_64-linux.tar.bz2
           echo "$ARM_DIR/gcc-arm-none-eabi-13.3-2024.07/bin" >> $GITHUB_PATH
           arm-none-eabi-gcc --version
-        shell: bash
 
-      - name: Build firmware
-        run: |
-          echo "Starting firmware build..."
-          make build-bl
-        shell: bash
+      # Install dependencies (if needed)
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential cmake pkg-config python3
 
-      - name: Upload firmware artifact
+      # Build firmware
+      - name: Build
+        run: make build-bl
+
+      # Upload firmware artifact
+      - name: Upload firmware
         uses: actions/upload-artifact@v4
         with:
           name: meowbit-firmware
-          path: |
-            build/*.bin
-            build/*.hex
-            build/*.uf2
+          path: build/*.bin
