@@ -1,4 +1,4 @@
-name: Manual Firmware Build
+name: Manual Build
 
 on:
   workflow_dispatch:
@@ -6,33 +6,13 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      - name: Download and set up ARM GNU Toolchain 14.3.Rel1
+      - name: Test echo
         shell: bash
         run: |
-          echo "Downloading ARM GCC Toolchain 14.3.Rel1"
-          TOOLCHAIN_DIR="$HOME/arm-gcc"
-          mkdir -p "$TOOLCHAIN_DIR"
-          cd "$TOOLCHAIN_DIR"
-          wget -q https://developer.arm.com/-/media/Files/downloads/gnu-rm/14.3.Rel1/arm-gnu-toolchain-14.3.rel1-x86_64-arm-none-eabi.tar.xz
-          tar -xJf arm-gnu-toolchain-14.3.rel1-x86_64-arm-none-eabi.tar.xz
-          echo "$TOOLCHAIN_DIR/arm-gnu-toolchain-14.3.rel1-x86_64-arm-none-eabi/bin" >> $GITHUB_PATH
-          arm-none-eabi-gcc --version
-
-      - name: Build Meowbit firmware
-        shell: bash
-        run: |
-          echo "Running make build-bl"
-          make build-bl
-
-      - name: Package and upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: meowbit-bootloader
-          path: build/uf2-stm32f.zip
+          echo "This works!"
