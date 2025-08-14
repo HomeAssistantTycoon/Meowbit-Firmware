@@ -1,10 +1,10 @@
-name: Build with Make
+name: Build UF2 Firmware
 
 on:
   push:
     branches:
       - main
-  pull_request:
+  workflow_dispatch:
 
 jobs:
   build:
@@ -14,22 +14,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install Make
+      - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y make
+          sudo apt-get install -y make gcc-arm-none-eabi cmake
 
       - name: Verify Make version
         run: make --version
 
-      - name: Build project
-        run: make
+      - name: Build UF2
+        run: make build.uf2  # replace with your Makefile target
 
-      - name: Upload build artifact
+      - name: Upload UF2 artifact
         uses: actions/upload-artifact@v3
         with:
-          name: build-artifact
-          path: |
-            # Replace with your actual build output
-            bin/
-            output/
+          name: firmware
+          path: build.uf2
+
