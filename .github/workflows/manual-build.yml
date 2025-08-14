@@ -6,47 +6,34 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
 
     steps:
-    - name: Checkout repo
+    - name: Checkout repository
       uses: actions/checkout@v4
       with:
-        submodules: true
+        submodules: recursive
 
-    - name: Install ARM GCC toolchain
+    - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential make gcc-arm-none-eabi libnewlib-arm-none-eabi
-
-    - name: Force single-threaded libopencm3 build
-      shell: bash
-      run: |
-        export MAKEFLAGS="-j1"
-        echo "Single-threaded build enabled globally"
+        sudo apt-get install -y make gcc-arm-none-eabi git bzip2 curl
 
     - name: Build libopencm3
-      shell: bash
       run: |
-        set -e
-        echo "Building libopencm3..."
-        make -C libopencm3 lib
+        echo "Building libopencm3 single-threaded with bash"
+        make -C libopencm3 -j1
 
     - name: Build Meowbit firmware
-      shell: bash
       run: |
-        set -e
-        echo "Building Meowbit firmware..."
+        echo "Building Meowbit firmware"
         make build-bl
 
-    - name: Collect UF2 artifacts
-      shell: bash
-      run: |
-        mkdir -p release
-        find build -name '*.uf2' -exec cp {} release/ \; || echo "No UF2 files found"
-
-    - name: Upload UF2 artifact
+    - name: Upload firmware artifact
       uses: actions/upload-artifact@v4
       with:
-        name: meowbit-firmware
-        path: release/*.uf2
+        name: Meowbit-Firmware
+        path: Meowbit-Firmware/build/*.hex
 
